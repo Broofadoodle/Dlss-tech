@@ -31,12 +31,16 @@ jobs:
       - name: Build Web Production Assets
         run: bun run build
 
-      - name: Sync Capacitor Android Platform
-        run: npx cap sync android
+      - name: Add and Sync Capacitor Android
+        run: |
+          # If the android folder doesn't exist yet, initialize it
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
 
       - name: Configure Android Manifest Permissions
         run: |
-          # Inject permissions into AndroidManifest.xml safely if not already present
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST" ]; then
             sed -i '/<manifest/a \    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />' "$MANIFEST"
@@ -53,4 +57,3 @@ jobs:
         with:
           name: dlss5-mobile-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
