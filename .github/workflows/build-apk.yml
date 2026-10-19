@@ -33,11 +33,10 @@ jobs:
 
       - name: Add and Sync Capacitor Android
         run: |
-          # If the android folder doesn't exist yet, initialize it
           if [ ! -d "android" ]; then
-            npx cap add android
+            bunx cap add android
           fi
-          npx cap sync android
+          bunx cap sync android
 
       - name: Configure Android Manifest Permissions
         run: |
@@ -57,3 +56,4 @@ jobs:
         with:
           name: dlss5-mobile-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
