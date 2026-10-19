@@ -1,0 +1,6 @@
+{
+  "name": "DLSS 5 Mobile — String AI Neural Renderer",
+  "description": "Real-time neural rendering and graphics visual enhancer for mobile games with screen overlay, motion vector synthesis, and low-latency notification controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,13 @@
+{
+  "appId": "com.stringai.dlss5",
+  "appName": "DLSS 5 Mobile",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": true
+  }
+}
