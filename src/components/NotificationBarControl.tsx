@@ -141,14 +141,29 @@ export const NotificationBarControl: React.FC<NotificationBarControlProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={handleRequestPermission}
-              className="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md shadow-emerald-950 flex items-center gap-1.5"
+              onClick={() => {
+                if (typeof window !== 'undefined' && (window as any).AndroidBridge?.requestNotificationPermission) {
+                  (window as any).AndroidBridge.requestNotificationPermission();
+                  setRequestStatus('Requested native Android POST_NOTIFICATIONS permission.');
+                  return;
+                }
+                handleRequestPermission();
+              }}
+              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md shadow-emerald-950 flex items-center gap-1.5"
             >
               <Bell className="w-3.5 h-3.5" />
-              <span>Request Phone Permission</span>
+              <span>Grant Notification Permission</span>
             </button>
+            <a
+              href="intent:#Intent;action=android.settings.APP_NOTIFICATION_SETTINGS;package=com.stringai.dlss5;end"
+              target="_top"
+              rel="noopener noreferrer"
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700"
+            >
+              <span>Android Notification Settings</span>
+            </a>
             {currentBrowserStatus === 'granted' && (
               <button
                 onClick={dispatchRealNotification}

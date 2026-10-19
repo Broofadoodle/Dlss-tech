@@ -213,35 +213,71 @@ export const FloatingOverlayHUD: React.FC<FloatingOverlayHUDProps> = ({
             <span>Direct Android System Settings Redirection:</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {/* Primary: Display Over Other Apps Settings Intent */}
-            <a
-              href="intent:#Intent;action=android.settings.action.MANAGE_OVERLAY_PERMISSION;category=android.intent.category.DEFAULT;end"
-              target="_top"
-              rel="noopener noreferrer"
+          <div className="grid grid-cols-1 gap-2.5">
+            {/* Primary: Grant Permission to Display Over Other Apps */}
+            <button
               onClick={() => {
                 onTriggerHaptic?.();
-                setRealPermissionStatus('Dispatched intent: android.settings.action.MANAGE_OVERLAY_PERMISSION to Android OS.');
+
+                // 1. Check if inside compiled Android APK (AndroidBridge present)
+                if (typeof window !== 'undefined' && (window as any).AndroidBridge?.openOverlaySettings) {
+                  try {
+                    (window as any).AndroidBridge.openOverlaySettings();
+                    const isGranted = Boolean((window as any).AndroidBridge.isOverlayGranted?.());
+                    onUpdateOverlay({ permissionGranted: isGranted });
+                    setRealPermissionStatus(
+                      isGranted 
+                        ? 'Overlay permission verified active on your Android device!'
+                        : 'Opened Android Settings > Display over other apps. Please toggle the switch to ON.'
+                    );
+                  } catch (e: any) {
+                    setRealPermissionError('AndroidBridge Error: ' + e.message);
+                  }
+                  return;
+                }
+
+                // 2. Running in Web App / Browser (Not compiled APK)
+                // Real Android OS SYSTEM_ALERT_WINDOW cannot be granted from a web page
+                setRealPermissionStatus(null);
+                setRealPermissionError(
+                  "Android OS Restriction: Web browsers cannot grant 'android.permission.SYSTEM_ALERT_WINDOW' directly due to Android OS security sandbox rules. In the compiled APK on your phone, this opens native Settings. For web testing, launch the OS Floating PiP Window or Screen Capture below."
+                );
+
+                // Attempt Android Intent in case running on mobile Chrome with intent routing
+                try {
+                  const intentUri = 'intent:#Intent;action=android.settings.action.MANAGE_OVERLAY_PERMISSION;category=android.intent.category.DEFAULT;end';
+                  const a = document.createElement('a');
+                  a.href = intentUri;
+                  a.target = '_top';
+                  a.rel = 'noopener noreferrer';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                } catch (intentErr) {
+                  console.warn('Intent dispatch error', intentErr);
+                }
               }}
-              className="py-3 px-4 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-950 flex items-center justify-center gap-2 text-center"
+              className="py-3.5 px-5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-xl shadow-emerald-950 flex items-center justify-center gap-2 text-center"
             >
               <ExternalLink className="w-4 h-4 shrink-0" />
-              <span>Redirect to Android Overlay Settings</span>
-            </a>
+              <span>Grant Permission to Display Over Other Apps</span>
+            </button>
 
-            {/* Secondary: App Permission & Details Settings */}
+            {/* Secondary: Android App Details & Settings */}
             <a
               href="intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:com.stringai.dlss5;end"
               target="_top"
               rel="noopener noreferrer"
               onClick={() => {
                 onTriggerHaptic?.();
-                setRealPermissionStatus('Dispatched intent: android.settings.APPLICATION_DETAILS_SETTINGS to Android OS.');
+                if (typeof window !== 'undefined' && (window as any).AndroidBridge?.openOverlaySettings) {
+                  (window as any).AndroidBridge.openOverlaySettings();
+                }
               }}
-              className="py-3 px-4 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700 flex items-center justify-center gap-2 text-center"
+              className="py-2.5 px-4 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-300 transition-all border border-slate-700 flex items-center justify-center gap-2 text-center"
             >
-              <ExternalLink className="w-4 h-4 shrink-0 text-cyan-400" />
-              <span>Redirect to App Permissions Settings</span>
+              <ExternalLink className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+              <span>Open Android App Permissions Settings</span>
             </a>
           </div>
 

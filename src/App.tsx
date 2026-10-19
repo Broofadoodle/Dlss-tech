@@ -27,32 +27,35 @@ import {
   Monitor
 } from 'lucide-react';
 
+export const DEFAULT_SETTINGS: DlssSettings = {
+  enabled: true,
+  mode: 'quality',
+  stringAiIntensity: 80,
+  rayReconstruction: true,
+  motionVectors: true,
+  frameGeneration: '2x',
+  reflexLatency: 'boost',
+  sharpness: 65,
+  hdrToneMapping: true,
+  subSurfaceScattering: true,
+  npuProfile: 'balanced',
+  targetFPS: 120,
+  resolutionScale: 67,
+  showMotionVectorsDebug: false,
+  activeSceneId: 'cyberpunk'
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('viewport');
   const [deviceFrameMode, setDeviceFrameMode] = useState<boolean>(false);
+  const [revertToast, setRevertToast] = useState<boolean>(false);
 
   // Settings State
-  const [settings, setSettings] = useState<DlssSettings>({
-    enabled: true,
-    mode: 'quality',
-    stringAiIntensity: 80,
-    rayReconstruction: true,
-    motionVectors: true,
-    frameGeneration: '2x',
-    reflexLatency: 'boost',
-    sharpness: 65,
-    hdrToneMapping: true,
-    subSurfaceScattering: true,
-    npuProfile: 'balanced',
-    targetFPS: 120,
-    resolutionScale: 67,
-    showMotionVectorsDebug: false,
-    activeSceneId: 'cyberpunk'
-  });
+  const [settings, setSettings] = useState<DlssSettings>({ ...DEFAULT_SETTINGS });
 
-  // Overlay State
+  // Overlay State (Truthfully false until validated by Android OS or native APK)
   const [overlayConfig, setOverlayConfig] = useState<OverlayConfig>({
-    permissionGranted: true,
+    permissionGranted: typeof window !== 'undefined' && Boolean((window as any).AndroidBridge?.isOverlayGranted?.()),
     active: false,
     bubblePosition: { x: 24, y: 160 },
     bubbleCollapsed: false,
@@ -61,10 +64,10 @@ export default function App() {
     showMiniGraph: true
   });
 
-  // Notification Shade State
+  // Notification Shade State (Truthfully queries real browser Notification.permission)
   const [notificationState, setNotificationState] = useState<NotificationControlState>({
-    permission: typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'granted',
-    persistentEnabled: true,
+    permission: typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default',
+    persistentEnabled: false,
     shadeOpen: false,
     lastUpdated: Date.now()
   });
@@ -177,6 +180,13 @@ export default function App() {
     setNotificationState(prev => ({ ...prev, ...updates }));
   };
 
+  const handleRevertSettings = () => {
+    triggerHaptic();
+    setSettings({ ...DEFAULT_SETTINGS });
+    setRevertToast(true);
+    setTimeout(() => setRevertToast(false), 3500);
+  };
+
   return (
     <div className="min-h-screen bg-[#080a0f] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-black">
       {/* Top Mobile Status Header */}
@@ -188,8 +198,17 @@ export default function App() {
         onToggleShade={() => {
           handleUpdateNotificationState({ shadeOpen: !notificationState.shadeOpen });
         }}
+        onRevertSettings={handleRevertSettings}
         onTriggerHaptic={triggerHaptic}
       />
+
+      {/* Revert Toast Notification */}
+      {revertToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <RotateCcw className="w-3.5 h-3.5" />
+          <span>All DLSS 5 & String AI settings reverted to defaults!</span>
+        </div>
+      )}
 
       {/* Main Responsive Body Container */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 pb-24 md:pb-8">
@@ -206,7 +225,7 @@ export default function App() {
               onTriggerHaptic={triggerHaptic}
             />
 
-            {/* Quick Engine Status Bar */}
+            {/* Quick Engine Status Bar with Working Revert Action */}
             <div className="p-4 rounded-2xl glass-panel border border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -215,12 +234,21 @@ export default function App() {
                 <span className="font-mono text-emerald-400 capitalize">{settings.mode} Mode</span>
               </div>
 
-              <div className="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
-                <span>NPU: {telemetry.npuUtilization}%</span>
-                <span>·</span>
-                <span>Reflex: {settings.reflexLatency.toUpperCase()}</span>
-                <span>·</span>
-                <span>{telemetry.powerDrawWatts.toFixed(1)}W</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-slate-400 font-mono text-[11px]">
+                  <span>NPU: {telemetry.npuUtilization}%</span>
+                  <span>·</span>
+                  <span>Reflex: {settings.reflexLatency.toUpperCase()}</span>
+                </div>
+
+                <button
+                  onClick={handleRevertSettings}
+                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[11px] font-medium text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+                  title="Revert all settings to defaults"
+                >
+                  <RotateCcw className="w-3 h-3 text-emerald-400" />
+                  <span>Revert Defaults</span>
+                </button>
               </div>
             </div>
           </div>

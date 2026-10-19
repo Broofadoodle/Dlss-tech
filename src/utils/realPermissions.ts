@@ -220,15 +220,19 @@ export async function requestRealNotificationPermission(): Promise<PermissionRes
         granted: false,
         nativeStatus: status,
         error: status === 'denied' 
-          ? 'Notification permission is blocked. Tap the address bar lock icon to allow notifications.'
+          ? 'Notification permission is blocked by your browser. Tap the tune/lock icon in the URL bar to allow notifications.'
           : 'Notification permission dialog was dismissed without granting.'
       };
     }
   } catch (err: any) {
+    const isIframe = window.self !== window.top;
+    const msg = isIframe
+      ? 'Browser restriction: Notification prompts are blocked inside iframe previews. Tap "Direct URL" in the top bar to open in mobile Chrome to grant permissions.'
+      : (err.message || 'Notification request failed.');
     return {
       granted: false,
       nativeStatus: 'error',
-      error: err.message || 'Notification request failed.'
+      error: msg
     };
   }
 }

@@ -7,7 +7,8 @@ import {
   ChevronDown, 
   Layers,
   Activity,
-  Zap
+  Zap,
+  RotateCcw
 } from 'lucide-react';
 import { DlssSettings, PerformanceTelemetry, NotificationControlState, OverlayConfig } from '../types/dlss';
 
@@ -17,6 +18,7 @@ interface TopMobileHeaderProps {
   notificationState: NotificationControlState;
   overlayConfig: OverlayConfig;
   onToggleShade: () => void;
+  onRevertSettings?: () => void;
   onTriggerHaptic?: () => void;
 }
 
@@ -26,6 +28,7 @@ export const TopMobileHeader: React.FC<TopMobileHeaderProps> = ({
   notificationState,
   overlayConfig,
   onToggleShade,
+  onRevertSettings,
   onTriggerHaptic
 }) => {
   const [timeStr, setTimeStr] = useState<string>('12:45');
@@ -115,8 +118,22 @@ export const TopMobileHeader: React.FC<TopMobileHeaderProps> = ({
           </div>
         </div>
 
-        {/* Zone 3: Notification Shade Trigger & Standalone Link */}
+        {/* Zone 3: Revert, Standalone Link & Notification Shade Trigger */}
         <div className="flex items-center gap-2">
+          {onRevertSettings && (
+            <button
+              onClick={() => {
+                onRevertSettings();
+                onTriggerHaptic?.();
+              }}
+              title="Revert all settings to defaults"
+              className="px-2.5 py-1.5 rounded-xl border bg-slate-900/80 text-slate-300 hover:text-white border-slate-800 text-xs flex items-center gap-1.5 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-[11px] font-medium hidden xs:inline">Revert</span>
+            </button>
+          )}
+
           <a
             href={typeof window !== 'undefined' ? window.location.href : '#'}
             target="_blank"
